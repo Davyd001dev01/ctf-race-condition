@@ -1,0 +1,26 @@
+# dependências e builds
+node_modules/
+.next/
+dist/
+build/
+# arquivos pesados
+*.zip
+*.tar
+*.tar.gz
+*.7z
+# binários do Next SWC
+**/next-swc.*.node
+# dependências e builds
+node_modules/
+.next/
+dist/
+build/
+
+# artefatos e arquivos pesados
+*.zip
+*.7z
+*.tar
+*.tar.gz
+
+# binários do Next SWC
+**/next-swc.*.node

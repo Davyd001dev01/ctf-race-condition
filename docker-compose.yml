@@ -1,0 +1,31 @@
+services:
+  backend:
+    build: ./backend
+    container_name: ctf-race-backend
+    environment:
+      - FLASK_SECRET=super-secret-key
+      - FLAG=CTF{race_condition_ftw}
+      - FLAG_THRESHOLD=8000
+      - LEDGER_MODE=json            # <- torna mais difícil
+      - RACE_WIN1_MS=25,60          # janela bem curta
+      - RACE_WIN2_MS=0,20
+      - AMOUNT_MAX=5                # obriga muito mais requisições
+      - INIT_GRANDKAI=200           # fonte limitada
+      - RATE_MAX_PER_SEC=30         # limita bursts por sessão/IP
+    volumes:
+      - ./backend/storage:/app/storage
+    ports:
+      - "5000:5000"
+    command: >
+      gunicorn -w 1 --threads 50 -b 0.0.0.0:5000 app:app
+
+  frontend:
+    build: ./frontend
+    container_name: ctf-race-frontend
+    environment:
+      - BACKEND_URL=http://backend:5000
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
