@@ -21,7 +21,6 @@ def ensure_dirs():
     os.makedirs(CREDITS_DIR, exist_ok=True)
 
 def load_balances():
-    """Leitura tolerante a rasgo: re-tenta em caso de JSON parcial/ausente."""
     ensure_dirs()
     for _ in range(6):
         try:
@@ -29,11 +28,9 @@ def load_balances():
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
             time.sleep(0.05)
-    # fallback seguro (valor alto do GrandKai ajuda na demo)
     return {"GrandKai": 1000, "attacker": 0}
 
 def save_balances(bal):
-    """Escrita atômica: tmp único + fsync + replace (último ganha, OK para o lab)."""
     ensure_dirs()
     tmp_path = DATA_PATH + f".{uuid.uuid4().hex}.tmp"
     with open(tmp_path, "w", encoding="utf-8") as f:
@@ -43,7 +40,6 @@ def save_balances(bal):
     os.replace(tmp_path, DATA_PATH)
 
 def append_credit(user: str, amount: int):
-    """Crédito acumulativo via ledger append-only: cada req gera um lançamento próprio."""
     ensure_dirs()
     path = os.path.join(CREDITS_DIR, f"{user}.{uuid.uuid4().hex}.cred")
     with open(path, "w", encoding="utf-8") as f:
@@ -52,7 +48,6 @@ def append_credit(user: str, amount: int):
         os.fsync(f.fileno())
 
 def sum_credits(user: str) -> int:
-    """Soma os lançamentos do usuário; ignora arquivos rasgados/eventuais erros."""
     total = 0
     try:
         for name in os.listdir(CREDITS_DIR):
@@ -71,7 +66,6 @@ def sum_credits(user: str) -> int:
     return total
 
 def effective_balance(user: str) -> int:
-    """Saldo efetivo = base (JSON) + créditos (ledger)."""
     base = int(load_balances().get(user, 0))
     return base + sum_credits(user)
 
@@ -112,7 +106,7 @@ def transfer():
     data = request.get_json(silent=True) or {}
     from_user = data.get("fromUser", "GrandKai")
     to_user   = data.get("toUser", user)
-    amount    = int(data.get("amount", 1))  # pode usar 100 para acelerar a flag
+    amount    = int(data.get("amount", 1))  
     if amount <= 0:
         return jsonify({"ok": False, "error": "invalid amount"}), 400
 
@@ -149,7 +143,6 @@ def secret_flag():
 @app.post("/reset")
 def reset_bals():
     save_balances({"GrandKai": 1000, "attacker": 0})
-    # limpa o ledger
     try:
         for name in os.listdir(CREDITS_DIR):
             try:
