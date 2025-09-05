@@ -7,11 +7,12 @@ services:
       - FLAG=CTF{race_condition_ftw}
       - FLAG_THRESHOLD=8000
       - LEDGER_MODE=json            
-      - RACE_WIN1_MS=25,60         
+      - RACE_WIN1_MS=25,60          
       - RACE_WIN2_MS=0,20
       - AMOUNT_MAX=5               
-      - INIT_GRANDKAI=200           
-      - RATE_MAX_PER_SEC=30         
+      - INIT_GRANDKAI=200
+      - RATE_MAX_PER_SEC=30
+      - RESET_ON_LOGIN=true
     volumes:
       - ./backend/storage:/app/storage
     ports:

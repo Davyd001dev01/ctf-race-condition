@@ -10,6 +10,10 @@ CREDITS_DIR = os.path.join(BASE_DIR, "storage", "credits")
 
 FLAG = os.getenv("FLAG", "CTF{default_flag}")
 FLAG_THRESHOLD = int(os.getenv("FLAG_THRESHOLD", "8000"))
+RESET_ON_LOGIN = os.getenv("RESET_ON_LOGIN", "true").lower() == "true"
+INIT_GRANDKAI = int(os.getenv("INIT_GRANDKAI", "1000"))
+
+
 
 USERS = {"attacker": "dragonball", "GrandKai": "zeni"}
 
@@ -75,10 +79,11 @@ def effective_balance(user: str) -> int:
 @app.post("/login")
 def login():
     data = request.get_json(silent=True) or {}
-    user = data.get("username")
-    pwd  = data.get("password")
+    user = data.get("username"); pwd = data.get("password")
     if USERS.get(user) == pwd:
         session["user"] = user
+        if RESET_ON_LOGIN:
+            reset_state()  # reseta o estado a cada login se habilitado
         return jsonify({"ok": True, "user": user})
     return jsonify({"ok": False, "error": "invalid creds"}), 401
 
@@ -142,7 +147,12 @@ def secret_flag():
 
 @app.post("/reset")
 def reset_bals():
-    save_balances({"GrandKai": 1000, "attacker": 0})
+    reset_state()
+    return jsonify({"ok": True})
+
+
+def reset_state():
+    save_balances({"GrandKai": INIT_GRANDKAI, "attacker": 0})
     try:
         for name in os.listdir(CREDITS_DIR):
             try:
@@ -151,4 +161,8 @@ def reset_bals():
                 pass
     except FileNotFoundError:
         pass
-    return jsonify({"ok": True})
+    try:
+        key = f"{session.get('user','anon')}:{request.headers.get('X-Forwarded-For', request.remote_addr or 'ip?')}"
+        _bucket.pop(key, None)   
+    except Exception:
+        pass
